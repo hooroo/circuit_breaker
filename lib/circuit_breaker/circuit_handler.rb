@@ -64,6 +64,7 @@ class CircuitBreaker::CircuitHandler
   # Handles the method covered by the circuit breaker.
   #
   def handle(circuit_state, method, *args, &block)
+    puts "@@ handle called with cs=#{circuit_state.inspect}"
     if is_tripped(circuit_state)
       @logger.info("handle: breaker is tripped, refusing to execute: #{circuit_state.inspect}")
       on_circuit_open(circuit_state)
