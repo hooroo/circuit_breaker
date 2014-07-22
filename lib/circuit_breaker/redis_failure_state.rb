@@ -44,8 +44,8 @@ module CircuitBreaker
     end
 
     def redis
-      fail ArgumentError, 'RedisFailureState needs a Redis instance' unless self.class.redis
       puts "@@ RFS: redis=#{self.class.redis}"
+      fail ArgumentError, 'RedisFailureState needs a Redis instance' unless self.class.redis
       self.class.redis
     end
 
@@ -54,7 +54,7 @@ module CircuitBreaker
       @redis = conn
     end
 
-    def redis
+    def self.redis
       @redis
     end
 
