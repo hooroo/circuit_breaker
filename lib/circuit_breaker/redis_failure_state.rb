@@ -49,8 +49,14 @@ module CircuitBreaker
       self.class.redis
     end
 
+    def redis=(conn)
+      puts "@@ RFS: setting redis=#{conn}"
+      @redis = conn
+      self.redis = conn
+    end
+
     def self.redis=(conn)
-      puts "@@ RFS: settings redis=#{conn}"
+      puts "@@ RFS: [self] setting redis=#{conn}"
       @redis = conn
     end
 
