@@ -40,10 +40,22 @@ class CircuitBreaker::CircuitHandler
   #
   attr_accessor :logger
 
-  DEFAULT_FAILURE_THRESHOLD  = 5
-  DEFAULT_FAILURE_TIMEOUT    = 5
-  DEFAULT_INVOCATION_TIMEOUT = 30
-  DEFAULT_EXCLUDED_EXCEPTIONS= []
+  #
+  # Which class to use for failure state
+  #
+  attr_accessor :failure_state_class
+
+  #
+  # Redis connection for RedisFailureState (optional)
+  #
+  attr_accessor :redis_conn
+
+  DEFAULT_FAILURE_THRESHOLD   = 5
+  DEFAULT_FAILURE_TIMEOUT     = 5
+  DEFAULT_INVOCATION_TIMEOUT  = 30
+  DEFAULT_EXCLUDED_EXCEPTIONS = []
+  DEFAULT_FAILURE_STATE_CLASS = CircuitBreaker::FailureState
+  DEFAULT_REDIS_CONN          = nil
 
   def initialize(logger = NullLogger.new)
     @logger              = logger
@@ -51,13 +63,15 @@ class CircuitBreaker::CircuitHandler
     @failure_timeout     = DEFAULT_FAILURE_TIMEOUT
     @invocation_timeout  = DEFAULT_INVOCATION_TIMEOUT
     @excluded_exceptions = DEFAULT_EXCLUDED_EXCEPTIONS
+    @failure_state_class = DEFAULT_FAILURE_STATE_CLASS
+    @redis_conn          = DEFAULT_REDIS_CONN
   end
 
   #
   # Returns a new CircuitState instance.
   #
   def new_circuit_state
-    ::CircuitBreaker::CircuitState.new
+    ::CircuitBreaker::CircuitState.new(@failure_state_class, @redis_conn)
   end
 
   #

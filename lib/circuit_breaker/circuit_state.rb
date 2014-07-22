@@ -38,8 +38,12 @@ class CircuitBreaker::CircuitState
     transitions :to => :closed, :from => [:open, :half_open]
   end
 
-  def initialize(failure_state = CircuitBreaker::FailureState.new)
-    @failure_state = failure_state
+  def initialize(failure_state_class)
+    @failure_state = failure_state_class.new
+  end
+
+  def initialize(failure_state_class, redis_conn)
+    @failure_state = failure_state_class.new(redis_conn)
   end
 
   attr_reader :failure_state
