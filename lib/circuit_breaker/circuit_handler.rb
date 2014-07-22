@@ -71,7 +71,9 @@ class CircuitBreaker::CircuitHandler
   # Returns a new CircuitState instance.
   #
   def new_circuit_state
-    ::CircuitBreaker::CircuitState.new(@failure_state_class, @redis_conn)
+    state = ::CircuitBreaker::CircuitState.new(@failure_state_class)
+    state.failure_state.redis = @redis_conn if @redis_conn
+    state
   end
 
   #

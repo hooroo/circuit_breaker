@@ -42,10 +42,6 @@ class CircuitBreaker::CircuitState
     @failure_state = failure_state_class.new
   end
 
-  def initialize(failure_state_class, redis_conn)
-    @failure_state = failure_state_class.new(redis_conn)
-  end
-
   attr_reader :failure_state
 
   def last_failure_time

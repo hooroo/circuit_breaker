@@ -4,11 +4,6 @@ module CircuitBreaker
     LAST_FAILURE_TIME = 'last_failure_time'.freeze
     FAILURE_COUNT     = 'failure_count'.freeze
 
-    def initialize(redis)
-      #@redis = redis
-      RedisFailureState.redis = redis
-    end
-
     def last_failure_time
       handle_timeout(1.year.from_now) do
         Time.at(redis.get(LAST_FAILURE_TIME).to_f)
@@ -48,7 +43,18 @@ module CircuitBreaker
       end
     end
 
-    attr_reader :redis
+    def redis
+      fail ArgumentError, 'RedisFailureState needs a Redis instance' unless self.class.redis
+      self.class.redis
+    end
+
+    def self.redis=(conn)
+      @redis = conn
+    end
+
+    def redis
+      @redis
+    end
 
     private
     def handle_timeout(default_return = nil)
