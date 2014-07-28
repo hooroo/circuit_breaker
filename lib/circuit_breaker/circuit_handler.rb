@@ -41,21 +41,16 @@ class CircuitBreaker::CircuitHandler
   attr_accessor :logger
 
   #
-  # Which class to use for failure state
+  # An instantiated failure state
   #
-  attr_accessor :failure_state_class
+  attr_accessor :failure_state
 
-  #
-  # Redis connection for RedisFailureState (optional)
-  #
-  attr_accessor :redis_conn
 
   DEFAULT_FAILURE_THRESHOLD   = 5
   DEFAULT_FAILURE_TIMEOUT     = 5
   DEFAULT_INVOCATION_TIMEOUT  = 30
   DEFAULT_EXCLUDED_EXCEPTIONS = []
-  DEFAULT_FAILURE_STATE_CLASS = CircuitBreaker::FailureState
-  DEFAULT_REDIS_CONN          = nil
+  DEFAULT_FAILURE_STATE       = CircuitBreaker::FailureState.new
 
   def initialize(logger = NullLogger.new)
     @logger              = logger
@@ -63,24 +58,20 @@ class CircuitBreaker::CircuitHandler
     @failure_timeout     = DEFAULT_FAILURE_TIMEOUT
     @invocation_timeout  = DEFAULT_INVOCATION_TIMEOUT
     @excluded_exceptions = DEFAULT_EXCLUDED_EXCEPTIONS
-    @failure_state_class = DEFAULT_FAILURE_STATE_CLASS
-    @redis_conn          = DEFAULT_REDIS_CONN
+    @failure_state       = DEFAULT_FAILURE_STATE
   end
 
   #
   # Returns a new CircuitState instance.
   #
   def new_circuit_state
-    state = ::CircuitBreaker::CircuitState.new(@failure_state_class)
-    state.failure_state.redis = @redis_conn if @redis_conn
-    state
+    ::CircuitBreaker::CircuitState.new(@failure_state)
   end
 
   #
   # Handles the method covered by the circuit breaker.
   #
   def handle(circuit_state, method, *args, &block)
-    puts "@@ handle called with cs=#{circuit_state.inspect}"
     if is_tripped(circuit_state)
       @logger.info("handle: breaker is tripped, refusing to execute: #{circuit_state.inspect}")
       on_circuit_open(circuit_state)
