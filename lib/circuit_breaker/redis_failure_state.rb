@@ -1,70 +1,68 @@
 # encoding: utf-8
 module CircuitBreaker
   class RedisFailureState
-    LAST_FAILURE_TIME = 'last_failure_time'.freeze
-    FAILURE_COUNT     = 'failure_count'.freeze
+    def initialize(mixee)
+      @mixee = mixee
+    end
+
+    def last_failure_time_key
+      "circuit_breaker-#{@mixee}-last_failure_time"
+    end
+
+    def failure_count_key
+      "circuit_breaker-#{@mixee}-failure_count"
+    end
 
     def last_failure_time
       handle_timeout(1.year.from_now) do
-        Time.at(redis.get(LAST_FAILURE_TIME).to_f)
+        Time.at(redis.get(last_failure_time_key).to_f)
       end
     end
 
     def last_failure_time=(value)
       handle_timeout do
-        redis.set(LAST_FAILURE_TIME, value.to_s)
+        redis.set(last_failure_time_key, value.to_s)
       end
     end
 
     def failure_count
       handle_timeout(0) do
-        redis.get(FAILURE_COUNT).to_i #nil.to_i == 0
+        redis.get(failure_count_key).to_i #nil.to_i == 0
       end
     end
 
     def failure_count=(value)
       handle_timeout do
-        redis.set(FAILURE_COUNT, value)
+        redis.set(failure_count_key, value)
       end
     end
 
     def increment_failure_count
       handle_timeout do
         redis.multi do |multi|
-          multi.incr(FAILURE_COUNT)
-          multi.set(LAST_FAILURE_TIME, Time.now.to_f)
+          multi.incr(failure_count_key)
+          multi.set(last_failure_time_key, Time.now.to_f)
         end
       end
     end
 
     def reset_failure_count
       handle_timeout do
-        redis.set(FAILURE_COUNT, 0)
+        redis.set(failure_count_key, 0)
       end
     end
 
     def redis
-      puts "@@ RFS: redis=#{self.class.redis}"
       fail ArgumentError, 'RedisFailureState needs a Redis instance' unless self.class.redis
       self.class.redis
     end
 
-    def redis=(conn)
-      puts "@@ RFS: setting redis=#{conn}"
-      @redis = conn
-      self.redis = conn
-    end
-
-    def self.redis=(conn)
-      puts "@@ RFS: [self] setting redis=#{conn}"
-      @redis = conn
-    end
-
-    def self.redis
-      @redis
+    class << self
+      attr_accessor :redis
     end
 
     private
+
     def handle_timeout(default_return = nil)
       yield
     rescue Redis::TimeoutError => e
