@@ -48,6 +48,13 @@ class CircuitBreaker::CircuitState
     transitions :to => :closed, :from => [:open, :half_open]
   end
 
+  #
+  # Close the circuit from any other state
+  #
+  aasm.event :reset! do
+    transitions :to => :closed
+  end
+
   def initialize(failure_state)
     @failure_state = failure_state
   end
@@ -80,6 +87,10 @@ class CircuitBreaker::CircuitState
 
   def current_state
     aasm.current_state
+  end
+
+  def closed?
+    current_state == :closed || current_state == :closed_initial
   end
 
   def trip_immediately
