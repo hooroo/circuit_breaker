@@ -67,6 +67,22 @@ module CircuitBreaker
     @circuit_state ||= self.class.circuit_handler.new_circuit_state
   end
 
+  module SharedState
+    def self.included(base)
+      base.send(:extend, ClassMethods)
+    end
+
+    def circuit_state
+      self.class.circuit_state
+    end
+
+    module ClassMethods
+      def circuit_state
+        @circuit_state ||= self.circuit_handler.new_circuit_state
+      end
+    end
+  end
+
   module ClassMethods
 
     #
@@ -105,7 +121,8 @@ module CircuitBreaker
 
 end
 
-require 'circuit_breaker/circuit_handler'
-require 'circuit_breaker/circuit_broken_exception'
 require 'circuit_breaker/circuit_state'
 require 'circuit_breaker/failure_state'
+require 'circuit_breaker/redis_failure_state'
+require 'circuit_breaker/circuit_handler'
+require 'circuit_breaker/circuit_broken_exception'

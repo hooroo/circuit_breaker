@@ -15,13 +15,15 @@ class CircuitBreaker::CircuitState
 
   aasm.state :closed, :enter => :reset_failure_count
 
-  aasm.initial_state :closed
+  aasm.state :closed_initial  # like :closed, but doesn't reset the failure count
+
+  aasm.initial_state :closed_initial
 
   #
   # Trips the circuit breaker into the open state where it will immediately fail.
   #
   aasm.event :trip do
-    transitions :to => :open, :from => [:closed, :half_open]
+    transitions :to => :open, :from => [:closed, :closed_initial, :half_open]
   end
 
   #
@@ -32,13 +34,28 @@ class CircuitBreaker::CircuitState
   end
 
   #
+  # Transitions from any state to a half_open state (in response to an
+  # action in the UI)
+  #
+  aasm.event :manual_reset do
+    transitions :to => :half_open, :from => [:open, :half_open, :closed, :closed_initial]
+  end
+
+  #
   # Close the circuit from an open or half open state.
   #
   aasm.event :reset do
     transitions :to => :closed, :from => [:open, :half_open]
   end
 
-  def initialize(failure_state = CircuitBreaker::FailureState.new)
+  #
+  # Close the circuit from any other state
+  #
+  aasm.event :reset! do
+    transitions :to => :closed
+  end
+
+  def initialize(failure_state)
     @failure_state = failure_state
   end
 
@@ -72,5 +89,14 @@ class CircuitBreaker::CircuitState
     aasm.current_state
   end
 
+  def closed?
+    current_state == :closed || current_state == :closed_initial
+  end
+
+  def trip_immediately
+    trip
+    self.failure_count = 999
+    self.last_failure_time = Time.now.to_f
+  end
 end
 
