@@ -71,6 +71,7 @@ describe CircuitBreaker do
   before(:each) do
     TestClass.circuit_handler.failure_threshold = 5
     @test_object = TestClass.new()
+    @test_object.circuit_state.reset!
   end
 
   it 'should call second_method and have it run through the circuit breaker' do
@@ -157,7 +158,7 @@ describe CircuitBreaker do
         called = false
         @test_object.method_that_takes_a_block{ called = true }
 
-        called.should be_true
+        called.should be_truthy
       end
       it 'increments failures' do
         lambda { @test_object.method_that_takes_a_block{ raise SpecificException } }.should raise_error(SpecificException)
